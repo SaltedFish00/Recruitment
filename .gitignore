@@ -1,5 +1,6 @@
 # 注释 - 以井号(#)开头的行为注释
 # 忽略单个文件
+settings/local.py
 # filename.txt
 # 忽略文件类型（例如所有的txt文件）
 # *.txt

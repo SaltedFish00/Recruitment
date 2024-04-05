@@ -106,9 +106,9 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
 
-LANGUAGE_CODE = "zh-hans"
+LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = "UTC"
+TIME_ZONE = "Asia/Shanghai"
 
 USE_I18N = True
 
@@ -163,7 +163,7 @@ LOGGING = {
 }
 
 # ldap
-LDAP_AUTH_URL = "ldap://127.0.0.1:389"
+LDAP_AUTH_URL = "ldap://localhost:389"
 
 LDAP_AUTH_USE_TLS = False
 
@@ -180,8 +180,8 @@ LDAP_AUTH_USER_LOOKUP_FIELDS = ("username",)
 
 LDAP_AUTH_CLEAN_USER_DATA = "django_python3_ldap.utils.clean_user_data"
 
-LDAP_AUTH_CONNECTION_USERNAME = "admin"
-LDAP_AUTH_CONNECTION_PASSWORD = "admin_passwd_4_ldap"
+LDAP_AUTH_CONNECTION_USERNAME = None
+LDAP_AUTH_CONNECTION_PASSWORD = None
 
 AUTHENTICATION_BACKENDS = {"django_python3_ldap.auth.LDAPBackend", "django.contrib.auth.backends.ModelBackend"}
 # Default primary key field type
