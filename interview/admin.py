@@ -1,9 +1,11 @@
 import logging
 
 from django.contrib import admin
+from django.db.models import Q
 from django.http import HttpResponse
 
 from interview.models import Candidate
+from interview import candidate_field as cf
 
 from datetime import datetime
 import csv
@@ -31,7 +33,7 @@ def export_model_as_csv(modeladmin, request, queryset):
     )
 
     for obj in queryset:
-        ## 单行 的记录（各个字段的值）， 根据字段对象，从当前实例 (obj) 中获取字段值
+        # 单行 的记录（各个字段的值）， 根据字段对象，从当前实例 (obj) 中获取字段值
         csv_line_values = []
         for field in field_list:
             field_object = queryset.model._meta.get_field(field)
@@ -45,12 +47,18 @@ def export_model_as_csv(modeladmin, request, queryset):
 
 
 export_model_as_csv.short_description = u'导出为CSV文件'
+export_model_as_csv.allowed_permissions = ('export',)
 
 
 class CandidateAdmin(admin.ModelAdmin):
     exclude = ('creator', 'created_date', 'modified_date')
 
     actions = (export_model_as_csv,)
+
+    # 当前用户是否有导出权限：
+    def has_export_permission(self, request):
+        opts = self.opts
+        return request.user.has_perm('%s.%s' % (opts.app_label, "export"))
 
     list_display = (
         "username", "city", "bachelor_school", "degree", "first_score", "first_result",
@@ -71,6 +79,25 @@ class CandidateAdmin(admin.ModelAdmin):
         for g in user.groups.all():
             group_names.append(g.name)
         return group_names
+
+    # 一面面试官仅填写一面反馈， 二面面试官可以填写二面反馈
+    def get_fieldsets(self, request, obj=None):
+        group_names = self.get_group_names(request.user)
+        if 'interviewer' in group_names and obj.first_interviewer_user == request.user:
+            return cf.default_fieldsets_first
+        if 'interviewer' in group_names and obj.second_interviewer_user == request.user:
+            return cf.default_fieldsets_second
+        return cf.default_fieldsets
+
+    # 对于非管理员，非HR，获取自己是一面面试官或者二面面试官的候选人集合:s
+    def get_queryset(self, request):  # show data only owned by the user
+        qs = super(CandidateAdmin, self).get_queryset(request)
+
+        group_names = self.get_group_names(request.user)
+        if request.user.is_superuser or 'hr' in group_names:
+            return qs
+        return Candidate.objects.filter(
+            Q(first_interviewer_user=request.user) | Q(second_interviewer_user=request.user))
 
     # list_editable = ('first_interviewer_user', 'second_interviewer_user',)
 
@@ -98,26 +125,6 @@ class CandidateAdmin(admin.ModelAdmin):
             logger.info("interviewer is in user's group for %s" % request.user.username)
             return ('first_interviewer_user', 'second_interviewer_user',)
         return ()
-
-
-    fieldsets = (
-        (None, {"classes": [""], 'fields': (
-            "userid", ("username", "city", "phone"), "email", "apply_position", "born_address", "gender",
-            "candidate_remark", "bachelor_school", "master_school", "doctor_school", "major", "degree",
-            "test_score_of_general_ability", "paper_score")}),
-        ('第一轮面试记录', {'fields': (
-            "first_score", "first_learning_ability", "first_professional_competency", "first_advantage",
-            "first_disadvantage", "first_result", "first_recommend_position", "first_interviewer_user",
-            "first_remark")}),
-        ('第二轮专业复试记录', {'fields': (
-            "second_score", "second_learning_ability", "second_professional_competency", "second_pursue_of_excellence",
-            "second_communication_ability", "second_pressure_score", "second_advantage", "second_disadvantage",
-            "second_result", "second_recommend_position", "second_interviewer_user", "second_remark",)}),
-        ('第三轮hr复试记录', {'fields': (
-            "hr_score", "hr_responsibility", "hr_communication_ability", "hr_logic_ability", "hr_potential",
-            "hr_stability",
-            "hr_advantage", "hr_disadvantage", "hr_result", "hr_interviewer_user", "hr_remark",)})
-    )
 
 
 admin.site.register(Candidate, CandidateAdmin)
