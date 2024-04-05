@@ -4,6 +4,7 @@ from django.contrib import admin
 from django.db.models import Q
 from django.http import HttpResponse
 
+from interview.dingtalk import send
 from interview.models import Candidate
 from interview import candidate_field as cf
 
@@ -16,6 +17,14 @@ exportable_fields = (
     'username', 'city', 'phone', 'bachelor_school', 'master_school', 'degree', 'first_result', 'first_interviewer_user',
     'second_result', 'second_interviewer_user', 'hr_result', 'hr_score', 'hr_remark', 'hr_interviewer_user')
 
+# 通知一面面试官面试
+def notify_interviewer(modeladmin, request, queryset):
+    candidates = ""
+    interviewers = ""
+    for obj in queryset:
+        candidates = obj.username + ";" + candidates
+        interviewers = obj.first_interviewer_user.username + ";" + interviewers
+    send("候选人 %s 进入面试环节，亲爱的面试官，请准备好面试： %s" % (candidates, interviewers) )
 
 # define export action
 def export_model_as_csv(modeladmin, request, queryset):
@@ -49,16 +58,23 @@ def export_model_as_csv(modeladmin, request, queryset):
 export_model_as_csv.short_description = u'导出为CSV文件'
 export_model_as_csv.allowed_permissions = ('export',)
 
+notify_interviewer.short_description = u'通知面试'
+notify_interviewer.allowed_permissions = ('notify',)
+
 
 class CandidateAdmin(admin.ModelAdmin):
     exclude = ('creator', 'created_date', 'modified_date')
 
-    actions = (export_model_as_csv,)
+    actions = (export_model_as_csv, notify_interviewer,)
 
     # 当前用户是否有导出权限：
     def has_export_permission(self, request):
         opts = self.opts
         return request.user.has_perm('%s.%s' % (opts.app_label, "export"))
+
+    def has_notify_permission(self, request):
+        opts = self.opts
+        return request.user.has_perm('%s.%s' % (opts.app_label, "notify"))
 
     list_display = (
         "username", "city", "bachelor_school", "degree", "first_score", "first_result",
