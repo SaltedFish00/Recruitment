@@ -54,7 +54,8 @@ class CandidateAdmin(admin.ModelAdmin):
 
     list_display = (
         "username", "city", "bachelor_school", "degree", "first_score", "first_result",
-        "first_interviewer_user", "second_result", "hr_score", "hr_result", "last_editor"
+        "first_interviewer_user", "second_score", "second_result", "second_interviewer_user", "hr_score", "hr_result",
+        "last_editor"
     )
 
     list_filter = (
@@ -64,6 +65,40 @@ class CandidateAdmin(admin.ModelAdmin):
     search_fields = ('username', 'phone', 'email', 'bachelor_school',)
 
     ordering = ('hr_result', 'second_result', 'first_result',)
+
+    def get_group_names(self, user):
+        group_names = []
+        for g in user.groups.all():
+            group_names.append(g.name)
+        return group_names
+
+    # list_editable = ('first_interviewer_user', 'second_interviewer_user',)
+
+    def get_list_editable(self, request):
+        group_names = self.get_group_names(request.user)
+        logger.info("======group_names: %s====" % group_names)
+        if request.user.is_superuser or 'hr' in group_names:
+            logger.info("==========")
+            return ('first_interviewer_user', 'second_interviewer_user',)
+        return ()
+
+    def get_changelist_instance(self, request):
+        """
+        override admin method and list_editable property value
+        with values returned by our custom method implementation.
+        """
+        self.list_editable = self.get_list_editable(request)
+        return super(CandidateAdmin, self).get_changelist_instance(request)
+
+    # readonly_fields = ('first_interviewer_user', 'second_interviewer_user',)
+    def get_readonly_fields(self, request, obj=None):
+        group_names = self.get_group_names(request.user)
+        logger.info("======group_names====")
+        if 'interviewer' in group_names:
+            logger.info("interviewer is in user's group for %s" % request.user.username)
+            return ('first_interviewer_user', 'second_interviewer_user',)
+        return ()
+
 
     fieldsets = (
         (None, {"classes": [""], 'fields': (
