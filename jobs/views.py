@@ -10,14 +10,14 @@ from jobs.models import Job, Cities, JobTypes
 
 def joblist(request):
     job_list = Job.objects.order_by('job_type')
-    template = loader.get_template("joblist.html")
+    # template = loader.get_template("joblist.html")
     context = {'job_list': job_list}
 
     for job in job_list:
         job.city_name = next(b for a, b in Cities if a == job.job_city)
         job.job_type = JobTypes[job.job_type]
-
-    return HttpResponse(template.render(context, request))
+    # return HttpResponse(template.render(context, request))
+    return render(request, 'joblist.html', context)
 
 
 def detail(request, job_id):
