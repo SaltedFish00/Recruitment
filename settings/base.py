@@ -26,13 +26,16 @@ DINGTALK_WEB_HOOK = ""
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
 
+LOGIN_REDIRECT_URL = "/"
+SIMPLE_BACKEND_REDIRECT_URL = "/accounts/login/"
 
 # Application definition
 
 INSTALLED_APPS = [
     "grappelli",
+    "registration",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
