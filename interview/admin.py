@@ -134,7 +134,6 @@ class CandidateAdmin(admin.ModelAdmin):
 
     def get_list_editable(self, request):
         group_names = self.get_group_names(request.user)
-        logger.info("======group_names: %s====" % group_names)
         if request.user.is_superuser or 'hr' in group_names:
             logger.info("==========")
             return ('first_interviewer_user', 'second_interviewer_user',)
@@ -151,7 +150,6 @@ class CandidateAdmin(admin.ModelAdmin):
     # readonly_fields = ('first_interviewer_user', 'second_interviewer_user',)
     def get_readonly_fields(self, request, obj=None):
         group_names = self.get_group_names(request.user)
-        logger.info("======group_names====")
         if 'interviewer' in group_names:
             logger.info("interviewer is in user's group for %s" % request.user.username)
             return ('first_interviewer_user', 'second_interviewer_user',)
