@@ -1,7 +1,7 @@
 from django.http import HttpResponse, Http404, HttpResponseRedirect
 from django.shortcuts import render
 from django.template import loader
-from django.views.generic import CreateView
+from django.views.generic import CreateView, DetailView
 from django.contrib.auth.mixins import LoginRequiredMixin
 
 from jobs.models import Job, Cities, JobTypes, Resume
@@ -30,6 +30,12 @@ def detail(request, job_id):
     except Job.DoesNotExist:
         raise Http404('Job does not exist')
     return render(request, 'job.html', {'job': job})
+
+
+class ResumeDetailView(DetailView):
+    """   简历详情页    """
+    model = Resume
+    template_name = 'resume_detail.html'
 
 
 class ResumeCreateView(LoginRequiredMixin, CreateView):
